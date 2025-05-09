@@ -1,9 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { format } from 'date-fns';
 
 export default function AdminDashboard() {
+  const [checklists, setChecklists] = useState([]);
   const [filterTech, setFilterTech] = useState('');
   const [after, setAfter] = useState('');
   const [before, setBefore] = useState('');
+
+  const fetchChecklists = async () => {
+    let query = supabase.from('checklists').select('*').order('created_at', { ascending: false });
+    if (filterTech) query = query.eq('technician', filterTech);
+    if (after) query = query.gte('created_at', after);
+    if (before) query = query.lte('created_at', before);
+
+    const { data, error } = await query;
+    if (!error) setChecklists(data);
+  };
+
+  useEffect(() => {
+    fetchChecklists();
+  }, []);
 
   const buildExportQuery = () => {
     const params = new URLSearchParams();
@@ -14,7 +31,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: 'auto' }}>
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: 'auto' }}>
       <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>Chubb Admin Dashboard</h1>
 
       <div style={{ display: 'flex', gap: '1rem', margin: '1rem 0' }}>
@@ -33,6 +50,7 @@ export default function AdminDashboard() {
           value={before}
           onChange={(e) => setBefore(e.target.value)}
         />
+        <button onClick={fetchChecklists}>Apply Filters</button>
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
@@ -42,6 +60,22 @@ export default function AdminDashboard() {
         <a href={`/api/export/excel?${buildExportQuery()}`} target="_blank">
           <button>Export Excel</button>
         </a>
+      </div>
+
+      <div>
+        {checklists.length === 0 ? (
+          <p>No submissions found.</p>
+        ) : (
+          checklists.map((item) => (
+            <div key={item.id} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+              <p><strong>{item.technician}</strong></p>
+              <p style={{ fontSize: '0.85rem', color: '#555' }}>
+                {format(new Date(item.created_at), 'PPPpp')}
+              </p>
+              <p>{item.notes || 'No notes provided.'}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
