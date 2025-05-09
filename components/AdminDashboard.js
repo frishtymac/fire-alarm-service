@@ -1,4 +1,5 @@
-/* placeholder – paste AdminDasimport React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 
@@ -79,4 +80,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-hboard here */
